@@ -1,132 +1,132 @@
-<h1 align="center">gpu-bridge</h1>
+# gpu-bridge
 
-<p align="center">
-  <b>Run your machine-learning work on free and rented GPUs, straight from your AI assistant.</b><br>
-  Kaggle · Google Colab · Hugging Face — one MCP server, one workflow.
-</p>
+An [MCP](https://modelcontextprotocol.io) server that lets an AI coding assistant run
+machine-learning work on remote GPUs: Kaggle, Google Colab and Hugging Face.
 
-<p align="center">
-  <a href="https://github.com/mahi-chan/gpu-bridge/actions/workflows/tests.yml"><img alt="tests" src="https://github.com/mahi-chan/gpu-bridge/actions/workflows/tests.yml/badge.svg?branch=claude%2Fmcp-colab-kaggle-3nheg4"></a>
-  <img alt="python 3.11+" src="https://img.shields.io/badge/python-3.11%2B-blue">
-  <img alt="platforms" src="https://img.shields.io/badge/installs%20on-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey">
-  <img alt="license MIT" src="https://img.shields.io/badge/license-MIT-green">
-</p>
-
----
-
-You say *"fine-tune this model on a T4"* or *"train PPO on CartPole with three seeds and
-show me the reward curves"*. Your assistant gets a GPU, runs the training in the
-background, follows it, shows you the plots, and saves the results before the machine
-disappears. gpu-bridge is the piece in between: a
-[Model Context Protocol](https://modelcontextprotocol.io) server that runs on your
-computer and gives any MCP-capable assistant the tools to do that.
+The server runs on your computer. The assistant calls its tools to get a GPU machine,
+start training in the background, follow the logs and metrics, look at plots, and copy
+the results back before the machine is recycled.
 
 ```
- Your AI assistant ─────►  gpu-bridge  ─────►  Kaggle GPU      free, started for you
- (Claude, Cursor,          on your             Colab GPU       free, one pasted line
-  Copilot, Gemini…)        computer            Hugging Face    rented, per minute
+ AI client  ───────►  gpu-bridge  ───────►  Kaggle GPU      free, started for you
+ (Cursor, Copilot,  (your computer)       Colab GPU       free, one pasted line
+  Gemini…)                             Hugging Face    paid, billed per minute
 ```
+
+Requirements: macOS, Linux or Windows, and an MCP-capable AI client. The installer
+fetches everything else, including Python (through [uv](https://docs.astral.sh/uv/)).
+
+## Contents
+
+- [Install](#install)
+- [Choose where the work runs](#choose-where-the-work-runs)
+- [Using it](#using-it)
+- [Training scripts](#training-scripts)
+- [Tools](#tools)
+- [Command line](#command-line)
+- [Configuration](#configuration)
+- [Costs](#costs)
+- [Security and privacy](#security-and-privacy)
+- [Troubleshooting](#troubleshooting)
+- [Development](#development)
+- [License](#license)
 
 ## Install
 
-**Linux**
+Linux and macOS:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/mahi-chan/gpu-bridge/main/install.sh | sh
 ```
 
-No `curl`? Use `wget`:
+(`wget -qO- <same address> | sh` works if `curl` is missing.)
 
-```bash
-wget -qO- https://raw.githubusercontent.com/mahi-chan/gpu-bridge/main/install.sh | sh
-```
-
-**macOS**: the same command as Linux.
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/mahi-chan/gpu-bridge/main/install.sh | sh
-```
-
-**Windows (PowerShell)**
+Windows, in PowerShell:
 
 ```powershell
 irm https://raw.githubusercontent.com/mahi-chan/gpu-bridge/main/install.ps1 | iex
 ```
 
-The Windows command is for Windows only; on Linux and macOS always use the `install.sh`
-line. (Inside WSL, use the Linux line. That registers AI clients installed *inside* WSL;
-for Windows apps such as Cursor on Windows, run the Windows line in PowerShell.)
+Inside WSL use the Linux command; it registers AI clients installed inside WSL. For
+Windows apps such as Cursor on Windows, run the PowerShell command instead.
 
-That one line downloads gpu-bridge, sets up its own Python environment (it installs
-[uv](https://docs.astral.sh/uv/) if you don't have it), registers the server with every
-supported AI client it finds, and adds a `gpu-bridge` command. Nothing else is needed —
-not even git or Python. Run the same line again to update.
+The installer:
 
-Then **restart your AI client** and say:
+1. downloads gpu-bridge to `~/.gpu-bridge/app` (installing `uv` first if needed),
+2. creates an isolated Python environment from the locked dependencies,
+3. registers the server with every supported AI client it finds,
+4. adds a `gpu-bridge` command to your `PATH`.
 
-> connect a Kaggle GPU
+Run the same command again to update. Restart your AI client afterwards.
 
 ### Supported AI clients
 
-Claude Code · Claude Desktop · Cursor · VS Code (GitHub Copilot) · Windsurf · Cline ·
-Gemini CLI · Codex CLI
+Claude Code, Claude Desktop, Cursor, VS Code (GitHub Copilot), Windsurf, Cline, Gemini
+CLI and Codex CLI. For any other client that can launch a local MCP server,
+`gpu-bridge install --print` prints the entry to paste into its settings.
 
-Any other client that can start a local MCP server works too: `gpu-bridge install --print`
-gives you the entry to paste into its settings.
+## Choose where the work runs
 
-## Where your work runs
-
-You need **one** of these. Each takes a single one-time step, and after that the
-assistant does the rest.
+You need one of these. Each has a one-time setup; after that the assistant does the rest.
+[docs/CONNECTING.md](docs/CONNECTING.md) has the full walkthrough.
 
 | | Cost | One-time setup | Starting a session |
 |---|---|---|---|
-| **Kaggle** | Free, about 30 GPU-hours a week | `gpu-bridge login kaggle` | Automatic. No browser. |
-| **Google Colab** | Free | None | You run one pasted line in a Colab cell. Nothing to copy back. |
-| **Hugging Face** | Paid per minute | `gpu-bridge login huggingface` | Automatic. |
+| Kaggle | Free, about 30 GPU-hours a week | `gpu-bridge login kaggle` | Automatic |
+| Google Colab | Free | None | You run one pasted line in a Colab cell |
+| Hugging Face | Paid per minute | `gpu-bridge login huggingface` | Automatic |
 
-Not sure where you stand? `gpu-bridge doctor` shows what is ready and what is missing.
-Or ask the assistant *"how do I connect Kaggle?"* — it knows the steps.
-The full walkthrough is in [docs/CONNECTING.md](docs/CONNECTING.md).
+Colab needs the pasted line because Google offers no API for starting a session. Kaggle
+and Hugging Face do, so gpu-bridge starts those itself.
 
-<details>
-<summary><b>Why does Colab need a pasted line when Kaggle doesn't?</b></summary>
+`gpu-bridge doctor` reports what is ready and what is still missing.
 
-Kaggle has an official API for starting a session; Colab does not, so a program cannot
-start one for you. gpu-bridge keeps it to the minimum: the assistant gives you one line,
-you run it in a new notebook, and the session connects by itself.
-</details>
+## Using it
 
-## What you can ask
+Ask the assistant in plain language. Some examples:
 
-| You say | What happens |
+| Request | What happens |
 |---|---|
-| "Connect a Kaggle GPU." | Starts a GPU session on Kaggle and attaches to it. |
-| "Join the Titanic competition, train a baseline and submit it." | Attaches the data, trains in the background, submits, shows your score. |
-| "Train PPO on CartPole with seeds 0, 1 and 2 and plot the rewards." | Three background runs, then reward curves in the chat. |
-| "Fine-tune SmolLM2 with LoRA on a T4 for at most an hour." | Rents one Hugging Face machine for that job; it stops when training ends. |
-| "How is the run going?" | Status, latest metrics, the log tail. |
+| "Connect a Kaggle GPU." | Starts a Kaggle session and attaches to it. |
+| "Join the Titanic competition, train a baseline and submit it." | Attaches the data, trains in the background, submits, reports the score. |
+| "Train PPO on CartPole with seeds 0, 1 and 2 and plot the rewards." | Three background runs, then reward curves. |
+| "Fine-tune SmolLM2 with LoRA on a T4 for at most an hour." | Rents one Hugging Face machine for the job; it stops when training ends. |
+| "How is the run going?" | Status, latest metrics and the end of the log. |
 | "Save the checkpoints." | Downloads them, or pushes them to a private Hugging Face repo. |
 | "Stop everything." | Ends the session and anything still billing. |
 
-## Why not just a notebook?
+Behaviour worth knowing:
 
-- **Training that survives.** Long runs go to the background on the remote machine, so
-  they never hit a chat timeout and keep going if your connection drops. A new chat
-  re-attaches to them.
-- **One workflow everywhere.** The same training script and the same follow-up (status,
-  logs, metrics, plots, stop) work on Kaggle, Colab and Hugging Face.
-- **Results that outlive the machine.** Remote disks are temporary. Checkpoints download
-  to your computer or go straight to a private Hugging Face repo.
-- **Guards on rented GPUs.** Every Hugging Face machine gets a time limit, the
-  interactive one shuts itself down when idle, and one tool lists what is still billing.
-- **Built for experiments.** Multi-seed sweeps, metric curves, RL rollouts, prediction
-  visualisations and Kaggle submissions are single requests.
+- Long runs execute in the background on the remote machine, so they survive chat
+  timeouts and dropped connections. A new chat can re-attach to them.
+- The same training script and the same status, log, metric and plot tools work on all
+  three platforms.
+- Remote disks are temporary. Save checkpoints as you go, to your computer or to a
+  private Hugging Face repo.
+
+## Training scripts
+
+Any Python script can be launched as a run. Four names are available inside it without
+importing anything:
+
+| Name | Purpose |
+|---|---|
+| `log_metric(step, **values)` | Records numbers for the status, metrics and plot tools. |
+| `save_checkpoint_file(path)` | Keeps a file or folder as a checkpoint. |
+| `GPU_BRIDGE_RUN_DIR` | The run's working folder. |
+| `SEED` | The run's seed, set by seed sweeps. |
+
+Examples:
+
+- [examples/llm_lora_finetune.py](examples/llm_lora_finetune.py): LoRA fine-tune of a language model
+- [examples/rl_cartpole.py](examples/rl_cartpole.py): PPO on CartPole
+- [examples/cv_mnist.py](examples/cv_mnist.py): a small CNN on MNIST
+
+The assistant can also fetch them with the `example_script` tool.
 
 ## Tools
 
-<details>
-<summary>All 54 tools, by group</summary>
+The server exposes 54 tools.
 
 | Group | Tools |
 |---|---|
@@ -141,88 +141,84 @@ you run it in a new notebook, and the session connects by itself.
 | Hugging Face Hub and Spaces | `hf_whoami`, `hf_search`, `hf_upload`, `hf_download`, `hf_push_run`, `hf_space_status`, `hf_space_hardware`, `hf_space_pause`, `hf_space_restart` |
 | Help | `setup_guide`, `example_script` |
 
-</details>
-
-### Training scripts
-
-Any Python script works. Four names are provided for you (don't import them):
-
-| Name | Purpose |
-|---|---|
-| `log_metric(step, **values)` | Record numbers; they feed the status, metrics and plot tools. |
-| `save_checkpoint_file(path)` | Keep a file or folder as a checkpoint. |
-| `GPU_BRIDGE_RUN_DIR` | This run's working folder. |
-| `SEED` | This run's seed (set by a sweep). |
-
-Ready-made examples: [LoRA fine-tune of a language model](examples/llm_lora_finetune.py),
-[PPO on CartPole](examples/rl_cartpole.py), [CNN on MNIST](examples/cv_mnist.py).
-
-## The `gpu-bridge` command
+## Command line
 
 ```
-gpu-bridge doctor               what is set up, and the next step for anything missing
+gpu-bridge doctor               show what is set up and the next step for anything missing
 gpu-bridge login kaggle         log in to Kaggle (once)
 gpu-bridge login huggingface    log in to Hugging Face (once)
-gpu-bridge clients              which AI clients were found and where it is installed
-gpu-bridge install              register with AI clients (--client NAME, --print)
+gpu-bridge clients              list supported AI clients and where they were found
+gpu-bridge install              register with AI clients (--client NAME, repeatable; --print)
 gpu-bridge uninstall            remove it from them
-gpu-bridge serve --http         serve over local HTTP for clients that connect by URL
+gpu-bridge serve --http         serve over local HTTP, for clients that connect by URL
 ```
+
+`gpu-bridge serve` without options runs the server over stdio, which is what the
+registered clients use. With `--http` it listens on `http://127.0.0.1:8765/mcp`.
+
+## Configuration
+
+| Variable | Effect |
+|---|---|
+| `GPU_BRIDGE_RENDEZVOUS_URL` | Relay used by new sessions to announce themselves. Defaults to [ntfy.sh](https://ntfy.sh); point it at your own ntfy server if you prefer. Set it in the AI client's environment. |
+| `GPU_BRIDGE_DIR` | Installer only: where the app is installed. Default `~/.gpu-bridge/app`. |
+| `GPU_BRIDGE_BIN` | Installer only: where the `gpu-bridge` command is placed. Default `~/.local/bin`. |
+| `GPU_BRIDGE_BRANCH` | Installer only: branch to install. Default `main`. |
+
+Kaggle and Hugging Face credentials are not configured here. They stay with the official
+tools: `~/.kaggle/kaggle.json` and the Hugging Face token store.
 
 ## Costs
 
-- **Kaggle and Colab are free.** Kaggle sessions started here end on request, after 30
-  idle minutes, or at the time limit, so they don't burn your weekly GPU hours.
-- **Hugging Face bills per minute** until a machine ends. The assistant is told to agree
-  the machine type and a time limit with you first. `hf_hardware` shows current prices.
+- Kaggle and Colab are free. A Kaggle session started by gpu-bridge ends on request,
+  after 30 idle minutes, or at its time limit (6 hours by default), so it does not use
+  up your weekly GPU quota.
+- Hugging Face bills per minute until a machine ends. Every machine gets a time limit,
+  the interactive one shuts itself down after 30 idle minutes, and `hf_job_list` shows
+  anything still running. `hf_hardware` shows current prices.
 
 ## Security and privacy
 
-- Your logins stay with the official Kaggle and Hugging Face tools on your computer.
-  gpu-bridge never writes a token into an AI client's config or into this repository.
-- A Kaggle or Colab session is reached through a temporary public tunnel, protected by a
-  random one-time code that only your computer and that session know.
-- To find a new session without you copying anything, the session posts its tunnel
-  address to a relay ([ntfy.sh](https://ntfy.sh) by default). Only that address passes
-  through, signed so it cannot be swapped, and the code never leaves your machines.
-  Set `GPU_BRIDGE_RENDEZVOUS_URL` to use your own relay.
+- Logins stay with the official Kaggle and Hugging Face tools on your computer.
+  gpu-bridge does not write tokens into an AI client's configuration.
+- Kaggle and Colab sessions are reached through a temporary public tunnel protected by a
+  random one-time code known only to your computer and that session.
+- To find a new session without manual copying, the session posts its tunnel address to a
+  relay. Only the address is sent, signed with the one-time code so it cannot be
+  swapped; the code itself never goes through the relay.
 - When a tool needs your Hugging Face or Kaggle login on the remote machine (pushing
-  checkpoints, downloading competition data), it is lent for that one command and not
-  stored there.
-- `gpu-bridge serve --http` listens on your computer only. Do not expose it to the
-  internet: it has no password.
+  checkpoints, downloading competition data), the credential is lent for that single
+  command and not stored.
+- `gpu-bridge serve --http` has no password. Keep it on localhost; anyone who can reach
+  it can rent machines on your Hugging Face account.
 
 ## Troubleshooting
 
 | Symptom | What to do |
 |---|---|
-| The assistant has no gpu-bridge tools | Restart the AI client. Check `gpu-bridge clients`. |
-| "No Kaggle login found" | `gpu-bridge login kaggle` |
-| A Kaggle session "ended before connecting" | Verify your phone number on kaggle.com (needed for GPU and internet), or the weekly GPU quota is used up. |
-| "Not connected yet" on Colab | Make sure the pasted line is still running and has printed `connected`. |
-| "No Hugging Face token found" | `gpu-bridge login huggingface` |
+| The assistant has no gpu-bridge tools | Restart the AI client and check `gpu-bridge clients`. |
+| "No Kaggle login found" | Run `gpu-bridge login kaggle`. |
+| A Kaggle session "ended before connecting" | Verify your phone number on kaggle.com (required for GPU and internet), or check that the weekly GPU quota is not used up. |
+| "Not connected yet" on Colab | Check that the pasted cell is still running and has printed `connected`. |
+| "No Hugging Face token found" | Run `gpu-bridge login huggingface`. |
 | Hugging Face error 402 | Add credits or a payment method at huggingface.co/settings/billing. |
 | A run disappeared | The machine was recycled. Save checkpoints as you go. |
-
-## Status
-
-Tested automatically on Linux, macOS and Windows: the installers, every tool against a
-real Jupyter server, and every Kaggle and Hugging Face call against the real libraries'
-interfaces. The Hugging Face machine image, the LoRA example and the PPO example have been
-run for real on CPU. Sessions on the live Kaggle, Colab and Hugging Face services depend
-on your accounts and are not part of the automated tests — if something misbehaves there,
-please open an issue with the message you saw.
 
 ## Development
 
 ```bash
-git clone -b main https://github.com/mahi-chan/gpu-bridge.git gpu-bridge
+git clone https://github.com/mahi-chan/gpu-bridge.git
 cd gpu-bridge
 uv sync
-uv run pytest              # about a minute
+uv run pytest
 uvx ruff check src tests
-./install.sh               # register this checkout with your AI clients
+./install.sh        # register this checkout with your AI clients
 ```
+
+The tests cover the installers, every tool against a local Jupyter server, and the Kaggle
+and Hugging Face calls against stubs. Sessions on the live services depend on your
+accounts and are not covered; please open an issue with the message you saw if something
+misbehaves there.
 
 ```
 src/gpu_bridge/
@@ -236,9 +232,6 @@ docs/CONNECTING.md         connecting each platform, step by step
 tests/                     test suite
 ```
 
-[`CLAUDE.md`](CLAUDE.md) holds the working notes an assistant reads when developing in
-this repository.
-
 ## License
 
-MIT
+MIT, see [LICENSE](LICENSE).
