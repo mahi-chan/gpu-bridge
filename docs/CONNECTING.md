@@ -70,6 +70,18 @@ Good to know:
 - The same line also works in a Kaggle notebook (with Internet switched on), if you
   prefer not to log in to Kaggle on your computer.
 
+### Watching the work cell by cell
+
+To see every step as a cell in a Colab notebook, with its output, say *"work in my Colab
+notebook"*. The assistant opens a notebook in your browser (a new one, or the one whose
+address you give it) and that page connects to gpu-bridge on your computer. Pick the GPU in
+that tab (**Runtime → Change runtime type**); the cells run on it. No line to paste. The
+page and gpu-bridge must be on the same computer, and the tab must stay open.
+
+This uses the connection Colab's own page offers to local assistants (the same one as
+Google's [colab-mcp](https://github.com/googlecolab/colab-mcp)). Long training still
+belongs in a background run (`launch_training`) on a runtime connected with the pasted line.
+
 ---
 
 ## Hugging Face — rented GPU, fully automatic

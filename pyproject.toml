@@ -13,6 +13,7 @@ dependencies = [
     "requests>=2.31",
     "six>=1.16",
     "websocket-client>=1.7",
+    "websockets>=15",
 ]
 
 [project.scripts]

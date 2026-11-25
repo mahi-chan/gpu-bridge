@@ -37,6 +37,8 @@ def test_all_tools_registered():
         "setup_guide", "example_script",
         # starting and ending Colab/Kaggle sessions
         "kaggle_runtime_start", "colab_runtime_start", "runtime_stop",
+        # the notebook open in the user's Colab tab
+        "colab_ui_connect", "colab_ui_call",
     }
     assert names == expected, f"missing {sorted(expected - names)}, unexpected {sorted(names - expected)}"
 
@@ -111,5 +113,5 @@ def test_server_starts_over_stdio_like_claude_code_launches_it(tmp_path):
     init, tools, result = asyncio.run(handshake())
     assert init.serverInfo.name == "gpu-bridge"
     assert "Hugging Face" in (init.instructions or "")
-    assert len(tools) == 54
+    assert len(tools) == 56
     assert result.content[0].text == "No runs yet."

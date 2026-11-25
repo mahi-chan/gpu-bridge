@@ -5,7 +5,7 @@ Registers every tool group and runs over stdio (how Claude Code launches it).
 
 from mcp.server.fastmcp import FastMCP
 
-from .tools import core, cv, guide_tools, hf_hub, hf_jobs, kaggle_tools, notebook, rl, sessions
+from .tools import colab_ui, core, cv, guide_tools, hf_hub, hf_jobs, kaggle_tools, notebook, rl, sessions
 
 INSTRUCTIONS = """\
 Runs ML work (RL, CV, LLM fine-tuning, experiments, competitions) on remote GPUs:
@@ -20,6 +20,9 @@ Get a machine first — one of:
     when the user is logged in to Kaggle on this computer.
   * Colab (free GPU): `colab_runtime_start` returns one line for the user to run in a
     Colab cell; when it is running, `connect_runtime`. Nothing is copied back.
+  * Colab, shown cell by cell: `colab_ui_connect` opens a notebook in the user's browser;
+    `colab_ui_call` then adds and runs cells there, on the runtime the user picked in that
+    notebook. Use it when the user wants to watch the work in Colab.
   * Hugging Face, interactive (rented): `hf_runtime_start(flavor)` then
     `hf_runtime_connect`. It bills per minute: `hf_runtime_stop` when done.
   * Hugging Face, one training = one machine: `hf_job_launch(script, run_name, flavor,
@@ -60,6 +63,7 @@ hf_jobs.register(mcp, core.connect_impl)
 hf_hub.register(mcp)
 guide_tools.register(mcp)
 sessions.register(mcp, core.connect_impl)
+colab_ui.register(mcp)
 
 
 def main() -> None:
