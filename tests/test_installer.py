@@ -180,7 +180,7 @@ def test_http_mode_for_clients_that_connect_by_url(tmp_path):
         raise AssertionError("HTTP server did not come up")
 
     try:
-        assert asyncio.run(handshake()) == 54
+        assert asyncio.run(handshake()) == 56
     finally:
         proc.terminate()
         proc.wait(timeout=20)
