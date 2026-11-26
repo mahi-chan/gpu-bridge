@@ -23,6 +23,7 @@ from mcp.shared.message import SessionMessage
 
 COLAB = "https://colab.research.google.com"
 ORIGINS = [COLAB, "https://colab.google.com"]
+HANDSHAKE_SECONDS = 20
 SCRATCH_NOTEBOOK = COLAB + "/notebooks/empty.ipynb"
 
 
@@ -32,7 +33,16 @@ class ColabUI:
         self.port = 0
         self.session: Optional[ClientSession] = None
         self.ready = asyncio.Event()
+        self.events: list[str] = []  # what the page did, for explaining a failed connection
         self._server = None
+
+    def _note(self, text: str) -> None:
+        self.events = (self.events + [text])[-6:]
+
+    def diagnosis(self) -> str:
+        if not self.events:
+            return "No browser connected to this computer at all."
+        return "What happened: " + "; ".join(self.events) + "."
 
     async def start(self) -> None:
         if self._server is None:
@@ -55,9 +65,11 @@ class ColabUI:
         if (f"access_token={self.token}" in request.path
                 or request.headers.get("Authorization") == f"Bearer {self.token}"):
             return None
+        self._note("a connection with a wrong token was refused")
         return connection.respond(403, "Bad or missing token\n")
 
     async def _handle(self, ws) -> None:
+        self._note("the Colab page opened the connection")
         if self.session is not None:
             await ws.close(1013, "Another Colab tab is already connected")
             return
@@ -87,11 +99,18 @@ class ColabUI:
                 tg.start_soon(pump_in)
                 tg.start_soon(pump_out)
                 async with ClientSession(from_ws, to_ws) as session:
-                    await session.initialize()
+                    await asyncio.wait_for(session.initialize(), HANDSHAKE_SECONDS)
                     self.session = session
                     self.ready.set()
                     await ws.wait_closed()
                 tg.cancel_scope.cancel()
+        except Exception as exc:
+            while isinstance(exc, BaseExceptionGroup) and exc.exceptions:
+                exc = exc.exceptions[0]
+            if isinstance(exc, TimeoutError):
+                self._note(f"the page connected but did not answer the MCP handshake in {HANDSHAKE_SECONDS}s")
+            else:
+                self._note(f"the handshake failed ({type(exc).__name__}: {exc})")
         finally:
             self.session = None
             self.ready.clear()

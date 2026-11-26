@@ -14,24 +14,30 @@ def register(mcp, ui: ColabUI | None = None):
     ui = ui or ColabUI()
 
     @mcp.tool()
-    async def colab_ui_connect(notebook_url: str = "", wait_seconds: int = 60) -> str:
+    async def colab_ui_connect(notebook_url: str = "", wait_seconds: int = 25) -> str:
         """Connect to a Colab notebook in the user's browser, so work appears there as cells.
 
         Opens the notebook in the browser on this computer (``notebook_url``, or a new
         scratch notebook when empty) and waits for the page to connect. The code runs on
         whatever runtime that notebook uses, so the user picks the GPU there
         (Runtime > Change runtime type). Returns the notebook tools Colab offers, with
-        their arguments; call them with ``colab_ui_call``.
+        their arguments; call them with ``colab_ui_call``. The user must click Connect in the
+        Colab page. If the wait ends first, call this again: the page stays valid. Waits over
+        50 seconds are cut to 50, because clients abandon a tool call that takes longer.
         """
+        wait_seconds = min(wait_seconds, 50)
         await ui.start()
         if ui.session is None:
             url = ui.url(notebook_url)
-            webbrowser.open_new_tab(url)
+            opened = webbrowser.open_new_tab(url)
             try:
                 await asyncio.wait_for(ui.ready.wait(), wait_seconds)
             except asyncio.TimeoutError:
-                return ("The Colab page did not connect. Ask the user to open this address in "
-                        f"their browser on this computer, then call colab_ui_connect again:\n{url}")
+                return ("The Colab page did not connect. " + ui.diagnosis() +
+                        ("" if opened else " No browser could be opened from here.") +
+                        " The user must be signed in to Google in a Chrome or Edge window on this "
+                        "computer and allow the page to connect to local apps if the browser asks. "
+                        "Ask them to open this address there, then call colab_ui_connect again:\n" + url)
         listed = await ui.session.list_tools()
         lines = ["Connected to the Colab notebook. Its tools (call them with colab_ui_call):"]
         for tool in listed.tools:

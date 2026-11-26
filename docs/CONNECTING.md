@@ -78,6 +78,13 @@ address you give it) and that page connects to gpu-bridge on your computer. Pick
 that tab (**Runtime → Change runtime type**); the cells run on it. No line to paste. The
 page and gpu-bridge must be on the same computer, and the tab must stay open.
 
+Colab's page asks before it connects: sign in to Google in that browser, click **Connect**
+when asked to link to a local assistant, and allow the browser's prompt to reach apps on
+your computer if it shows one. If nothing connects within about 25 seconds the assistant
+says what it saw (no connection at all, a refused connection, or a failed handshake) and
+you can ask it to try again; keep using the same tab, do not reload it. Chrome and Edge
+work; browsers that block a secure page from talking to `localhost` do not.
+
 This uses the connection Colab's own page offers to local assistants (the same one as
 Google's [colab-mcp](https://github.com/googlecolab/colab-mcp)). Long training still
 belongs in a background run (`launch_training`) on a runtime connected with the pasted line.

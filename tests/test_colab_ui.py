@@ -71,3 +71,18 @@ def test_call_without_a_page_says_what_to_do():
     colab_ui_tools.register(mcp, ColabUI())
     out = asyncio.run(call(mcp, "colab_ui_call", {"tool": "add_code_cell"}))
     assert "colab_ui_connect" in str(out)
+
+
+def test_timeout_explains_what_the_page_did():
+    async def scenario():
+        ui, mcp = ColabUI(), FastMCP("t")
+        colab_ui_tools.register(mcp, ui)
+        await ui.start()
+        with mock.patch("webbrowser.open_new_tab", return_value=True):
+            silent = await call(mcp, "colab_ui_connect", {"wait_seconds": 1})
+        assert "No browser connected" in str(silent) and "signed in to Google" in str(silent)
+        with pytest.raises(websockets.InvalidStatus):
+            await fake_colab_page(ui.port, "wrong")
+        assert "wrong token" in ui.diagnosis()
+        await ui.stop()
+    asyncio.run(scenario())
