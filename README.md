@@ -126,7 +126,9 @@ The assistant can also fetch them with the `example_script` tool.
 
 ## Tools
 
-The server exposes 56 tools.
+The server exposes 58 tools.
+
+The Colab API tools are optional: they need a Google Cloud project and are not required for any other route. Kaggle, the pasted Colab line, the Colab notebook in your browser and Hugging Face work without it.
 
 | Group | Tools |
 |---|---|
@@ -135,6 +137,7 @@ The server exposes 56 tools.
 | Run code and files | `run_code`, `upload_file`, `download_file`, `fetch_image` |
 | Training runs | `launch_training`, `get_run_status`, `get_logs`, `get_metrics`, `plot_metrics`, `stop_run`, `list_runs`, `save_checkpoint`, `restore_checkpoint` |
 | Colab notebook in your browser | `colab_ui_connect`, `colab_ui_call` |
+| Colab API (create runtimes from code) | `colab_api_tools`, `colab_api_call` |
 | Notebooks | `notebook_create`, `notebook_read`, `notebook_add_cell`, `notebook_edit_cell`, `notebook_delete_cell`, `notebook_run_cell` |
 | Reinforcement learning | `rl_setup`, `rl_reward_curve`, `rl_record_rollout`, `rl_seed_sweep` |
 | Computer vision | `cv_load_dataset`, `cv_training_curves`, `cv_show_predictions` |

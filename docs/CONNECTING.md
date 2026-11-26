@@ -89,6 +89,30 @@ This uses the connection Colab's own page offers to local assistants (the same o
 Google's [colab-mcp](https://github.com/googlecolab/colab-mcp)). Long training still
 belongs in a background run (`launch_training`) on a runtime connected with the pasted line.
 
+### Creating a Colab runtime from code (Google's Colab API)
+
+This is optional. Every other route on this page works without it; skip it unless you want runtimes
+created from code. It needs your own Google Cloud project, so it cannot be set up once for other users.
+
+Google runs an MCP server that can create Colab runtimes without a pasted line, list the
+runtime types you may use, run code and report your Colab subscription. gpu-bridge reaches
+it through `colab_api_tools` and `colab_api_call`. Set it up once:
+
+1. Install the [Google Cloud CLI](https://cloud.google.com/sdk/docs/install) and sign in:
+   ```bash
+   gcloud auth application-default login
+   ```
+2. Choose a project (billing enabled) and enable the API in it:
+   ```bash
+   gcloud config set project PROJECT_ID
+   gcloud services enable colaboratory.googleapis.com
+   ```
+
+gpu-bridge asks gcloud for a fresh token on every call (tokens last about an hour). To
+avoid gcloud, set `GPU_BRIDGE_GOOGLE_TOKEN` and `GPU_BRIDGE_GOOGLE_PROJECT` instead.
+Runtimes created this way use your Colab quota and are not the runtime that
+`connect_runtime` attaches to; use `colab_api_call` with `execute_code` to run code in them.
+
 ---
 
 ## Hugging Face — rented GPU, fully automatic
