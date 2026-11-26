@@ -1,6 +1,6 @@
 [project]
 name = "gpu-bridge"
-version = "0.4.0"
+version = "0.5.1"
 description = "MCP server that runs ML work (RL, CV, LLM fine-tuning, competitions) on Google Colab, Kaggle and rented Hugging Face GPUs."
 readme = "README.md"
 requires-python = ">=3.11"

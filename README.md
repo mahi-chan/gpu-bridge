@@ -128,6 +128,8 @@ The assistant can also fetch them with the `example_script` tool.
 
 The server exposes 58 tools.
 
+The Colab API tools are optional: they need a Google Cloud project and are not required for any other route. Kaggle, the pasted Colab line, the Colab notebook in your browser and Hugging Face work without it.
+
 | Group | Tools |
 |---|---|
 | Get a machine | `kaggle_runtime_start`, `colab_runtime_start`, `connect_runtime`, `runtime_stop`, `runtime_status` |

@@ -84,6 +84,9 @@ belongs in a background run (`launch_training`) on a runtime connected with the 
 
 ### Creating a Colab runtime from code (Google's Colab API)
 
+This is optional. Every other route on this page works without it; skip it unless you want runtimes
+created from code. It needs your own Google Cloud project, so it cannot be set up once for other users.
+
 Google runs an MCP server that can create Colab runtimes without a pasted line, list the
 runtime types you may use, run code and report your Colab subscription. gpu-bridge reaches
 it through `colab_api_tools` and `colab_api_call`. Set it up once:
